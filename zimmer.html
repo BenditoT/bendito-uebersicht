@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bendito Tango Marathon 2026 – Zimmerübersicht</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 50%, #533483 100%);
+    padding: 30px 40px;
+    text-align: center;
+    border-bottom: 3px solid #e94560;
+  }
+  .header h1 { font-size: 2em; color: #fff; margin-bottom: 5px; letter-spacing: 1px; }
+  .header p { color: #aaa; font-size: 0.95em; }
+
+  .nav {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 15px; background: #16213e; flex-wrap: wrap;
+    border-bottom: 1px solid #333;
+  }
+  .nav button {
+    padding: 10px 20px; border: 2px solid #0f3460; background: transparent;
+    color: #aaa; border-radius: 25px; cursor: pointer; font-size: 0.9em;
+    transition: all 0.3s;
+  }
+  .nav button:hover { border-color: #e94560; color: #fff; }
+  .nav button.active { background: #e94560; border-color: #e94560; color: #fff; }
+
+  .content { padding: 25px; max-width: 1400px; margin: 0 auto; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px; margin-bottom: 30px;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, #16213e, #1a1a3e);
+    border: 1px solid #333; border-radius: 12px; padding: 20px; text-align: center;
+  }
+  .stat-card .number { font-size: 2.2em; font-weight: 700; color: #e94560; }
+  .stat-card .label { color: #888; font-size: 0.85em; margin-top: 5px; }
+  .stat-card.green .number { color: #4ecca3; }
+  .stat-card.blue .number { color: #6c9bff; }
+  .stat-card.orange .number { color: #f0a500; }
+
+  /* Room Grid */
+  .room-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .room-card {
+    background: #16213e; border: 1px solid #333; border-radius: 10px;
+    padding: 15px; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .room-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(233,69,96,0.2); }
+  .room-card.occupied { border-left: 4px solid #e94560; }
+  .room-card.free { border-left: 4px solid #4ecca3; }
+  .room-card.blocked { border-left: 4px solid #555; opacity: 0.6; }
+  .room-card.partial { border-left: 4px solid #f0a500; }
+
+  .room-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .room-nr {
+    background: #0f3460; color: #fff; width: 36px; height: 36px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.9em;
+  }
+  .room-type {
+    font-size: 0.75em; color: #888; background: #1a1a2e; padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .room-price { color: #f0a500; font-size: 0.85em; font-weight: 600; }
+
+  .bed-list { list-style: none; }
+  .bed-list li {
+    padding: 4px 8px; margin: 3px 0; border-radius: 6px; font-size: 0.85em;
+  }
+  .bed-list li.occupied { background: rgba(233,69,96,0.15); color: #ff7b93; }
+  .bed-list li.free { background: rgba(78,204,163,0.15); color: #4ecca3; }
+  .bed-list li.blocked { background: rgba(100,100,100,0.15); color: #666; }
+
+  /* Name Table */
+  .name-table {
+    width: 100%; border-collapse: collapse; background: #16213e;
+    border-radius: 10px; overflow: hidden;
+  }
+  .name-table th {
+    background: #0f3460; padding: 12px 15px; text-align: left;
+    color: #aaa; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .name-table td {
+    padding: 10px 15px; border-bottom: 1px solid #1a1a2e;
+    font-size: 0.9em;
+  }
+  .name-table tr:hover td { background: rgba(233,69,96,0.08); }
+  .name-table .room-badge {
+    background: #0f3460; padding: 3px 10px; border-radius: 12px;
+    font-size: 0.8em; display: inline-block;
+  }
+
+  /* Booking Table */
+  .booking-table {
+    width: 100%; border-collapse: collapse; background: #16213e;
+    border-radius: 10px; overflow: hidden;
+  }
+  .booking-table th {
+    background: #0f3460; padding: 12px 15px; text-align: left;
+    color: #aaa; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .booking-table td {
+    padding: 10px 15px; border-bottom: 1px solid #1a1a2e;
+    font-size: 0.85em;
+  }
+  .booking-table tr:hover td { background: rgba(233,69,96,0.08); }
+
+  .badge {
+    padding: 3px 10px; border-radius: 12px; font-size: 0.75em;
+    display: inline-block; font-weight: 600;
+  }
+  .badge.paid { background: rgba(78,204,163,0.2); color: #4ecca3; }
+  .badge.open { background: rgba(240,165,0,0.2); color: #f0a500; }
+  .badge.canceled { background: rgba(100,100,100,0.2); color: #666; text-decoration: line-through; }
+
+  /* Type bars */
+  .type-bars { max-width: 700px; }
+  .type-bar-row { margin: 10px 0; }
+  .type-bar-label { font-size: 0.85em; color: #aaa; margin-bottom: 4px; }
+  .type-bar-track {
+    height: 28px; background: #1a1a2e; border-radius: 6px;
+    display: flex; overflow: hidden;
+  }
+  .type-bar-segment {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.7em; font-weight: 600; color: #fff; min-width: 20px;
+  }
+  .type-bar-segment.occ { background: #e94560; }
+  .type-bar-segment.free { background: #4ecca3; }
+  .type-bar-segment.blk { background: #444; }
+
+  .search-box {
+    width: 100%; max-width: 400px; padding: 10px 15px;
+    background: #16213e; border: 1px solid #333; border-radius: 8px;
+    color: #eee; font-size: 0.9em; margin-bottom: 20px;
+  }
+  .search-box:focus { outline: none; border-color: #e94560; }
+
+  /* Floor plan visual */
+  .floor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px; margin-top: 15px;
+  }
+  .floor-room {
+    aspect-ratio: 1; border-radius: 8px; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    font-size: 0.7em; cursor: default; transition: transform 0.2s;
+    position: relative;
+  }
+  .floor-room:hover { transform: scale(1.1); z-index: 2; }
+  .floor-room .fnr { font-weight: 700; font-size: 1.3em; }
+  .floor-room .ftype { font-size: 0.8em; opacity: 0.8; }
+  .floor-room.f-occupied { background: linear-gradient(135deg, #c0392b, #e94560); color: #fff; }
+  .floor-room.f-free { background: linear-gradient(135deg, #27ae60, #4ecca3); color: #fff; }
+  .floor-room.f-blocked { background: #333; color: #666; }
+  .floor-room.f-partial { background: linear-gradient(135deg, #d4a017, #f0a500); color: #fff; }
+  .floor-room.f-norbert { background: linear-gradient(135deg, #533483, #8e44ad); color: #fff; }
+
+  .tooltip {
+    display: none; position: absolute; bottom: 105%; left: 50%;
+    transform: translateX(-50%); background: #16213e; border: 1px solid #e94560;
+    border-radius: 8px; padding: 10px; white-space: nowrap;
+    font-size: 0.85em; z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  .floor-room:hover .tooltip { display: block; }
+
+  .legend {
+    display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 0.8em; color: #aaa;
+  }
+  .legend-dot {
+    width: 14px; height: 14px; border-radius: 4px;
+  }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 1.3em; }
+    .content { padding: 15px; }
+    .floor-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Bendito Tango Marathon 2026</h1>
+  <p>Zimmer- & Buchungsübersicht – Pielenhofen bei Regensburg</p>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showView('dashboard')">Dashboard</button>
+  <button onclick="showView('floorplan')">Zimmerplan</button>
+  <button onclick="showView('rooms')">Zimmerliste</button>
+  <button onclick="showView('names')">Namensliste</button>
+  <button onclick="showView('bookings')">Buchungen</button>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="view active">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="number">154</div>
+        <div class="label">Betten gesamt</div>
+      </div>
+      <div class="stat-card green">
+        <div class="number">97</div>
+        <div class="label">Frei</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">37</div>
+        <div class="label">Belegt</div>
+      </div>
+      <div class="stat-card" style="opacity:0.6">
+        <div class="number" style="color:#666">20</div>
+        <div class="label">Blockiert</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="number">9</div>
+        <div class="label">Buchungen aktiv</div>
+      </div>
+      <div class="stat-card green">
+        <div class="number">4</div>
+        <div class="label">Bezahlt</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="number">5</div>
+        <div class="label">Offen</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="number">1038€</div>
+        <div class="label">Umsatz gesamt</div>
+      </div>
+      <div class="stat-card green">
+        <div class="number">458€</div>
+        <div class="label">Davon bezahlt</div>
+      </div>
+    </div>
+
+    <h3 style="color:#aaa;margin-bottom:15px;font-size:0.9em;text-transform:uppercase;letter-spacing:1px;">Belegung nach Zimmertyp</h3>
+    <div class="type-bars" id="typeBars"></div>
+  </div>
+
+  <!-- FLOOR PLAN -->
+  <div id="floorplan" class="view">
+    <h3 style="color:#aaa;margin-bottom:10px;font-size:0.9em;text-transform:uppercase;letter-spacing:1px;">Zimmerplan – Visuelle Übersicht</h3>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#e94560;"></div> Belegt</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ecca3;"></div> Frei</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> Teilweise belegt</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8e44ad;"></div> Orga</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#333;"></div> Blockiert</div>
+    </div>
+    <div class="floor-grid" id="floorGrid"></div>
+  </div>
+
+  <!-- ROOMS -->
+  <div id="rooms" class="view">
+    <input type="text" class="search-box" placeholder="Zimmer durchsuchen..." oninput="filterRooms(this.value)">
+    <div class="room-grid" id="roomGrid"></div>
+  </div>
+
+  <!-- NAMES -->
+  <div id="names" class="view">
+    <input type="text" class="search-box" placeholder="Name suchen..." oninput="filterNames(this.value)">
+    <table class="name-table" id="nameTable">
+      <thead><tr><th>Name</th><th>Zimmer</th><th>Zimmertyp</th><th>Preis/Nacht</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div id="bookings" class="view">
+    <table class="booking-table">
+      <thead><tr><th>#</th><th>Personen</th><th>Zimmer</th><th>Stadt</th><th>Status</th><th>Betrag</th><th>E-Mail</th></tr></thead>
+      <tbody id="bookingBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const rooms = [{"nr": 1, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 2, "bed_count": 2, "type": "dbedwoman", "price": 34.0, "whole_room": false, "beds": ["blocked", "blocked"]}, {"nr": 3, "bed_count": 2, "type": "dbedman", "price": 34.0, "whole_room": false, "beds": ["blocked", "blocked"]}, {"nr": 4, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["Annette Jäger", "Manfred Jäger"]}, {"nr": 5, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["blocked", "blocked"]}, {"nr": 6, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["4.0", "4.0"]}, {"nr": 7, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["blocked", "blocked"]}, {"nr": 8, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["blocked", "blocked"]}, {"nr": 9, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["blocked"]}, {"nr": 10, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["blocked", "blocked"]}, {"nr": 11, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["blocked", "blocked"]}, {"nr": 12, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["Klaus-Martin Grewe", "Birgit Hofer"]}, {"nr": 13, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["Regina Corduwitch", "Anne-Kathrin "]}, {"nr": 14, "bed_count": 2, "type": "loud", "price": 34.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 15, "bed_count": 2, "type": "loud", "price": 34.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 16, "bed_count": 2, "type": "loud", "price": 55.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 17, "bed_count": 0, "type": "", "price": 0, "whole_room": false, "beds": []}, {"nr": 18, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["5.0", "5.0"]}, {"nr": 19, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["1.0", "1.0"]}, {"nr": 20, "bed_count": 6, "type": "sixwoman", "price": 25.0, "whole_room": false, "beds": ["free", "free", "free", "free", "free", "free"]}, {"nr": 21, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["7.0", "7.0"]}, {"nr": 22, "bed_count": 6, "type": "sixman", "price": 25.0, "whole_room": false, "beds": ["free", "free", "free", "free", "free", "free"]}, {"nr": 23, "bed_count": 6, "type": "sixwoman", "price": 25.0, "whole_room": false, "beds": ["free", "free", "8.0", "free", "free", "free"]}, {"nr": 24, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["Dagmar Lautner", "Bernd Lautner"]}, {"nr": 25, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 26, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": true, "beds": ["free", "free", "free"]}, {"nr": 27, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": true, "beds": ["free", "free", "free"]}, {"nr": 28, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["6.0", "6.0"]}, {"nr": 29, "bed_count": 0, "type": "", "price": 34.0, "whole_room": false, "beds": []}, {"nr": 30, "bed_count": 6, "type": "sixman", "price": 25.0, "whole_room": false, "beds": ["free", "free", "free", "free", "free", "free"]}, {"nr": 31, "bed_count": 2, "type": "dbedwoman", "price": 34.0, "whole_room": false, "beds": ["Johanna Ruda", "Ehud Levi"]}, {"nr": 32, "bed_count": 2, "type": "double", "price": 25.0, "whole_room": true, "beds": ["Monika Hollauer", "Gregor Davetzhofen"]}, {"nr": 33, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["free"]}, {"nr": 34, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["11.0", "11.0"]}, {"nr": 35, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["block"]}, {"nr": 36, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["Julia Peirano"]}, {"nr": 37, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["Melinda Mike"]}, {"nr": 38, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["Philipp Neumayer"]}, {"nr": 39, "bed_count": 1, "type": "single", "price": 55.0, "whole_room": true, "beds": ["block"]}, {"nr": 40, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": false, "beds": ["free", "free", "free"]}, {"nr": 41, "bed_count": 1, "type": "single", "price": 34.0, "whole_room": true, "beds": ["block"]}, {"nr": 42, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["9.0", "9.0"]}, {"nr": 43, "bed_count": 2, "type": "dbedman", "price": 34.0, "whole_room": false, "beds": ["free", "free"]}, {"nr": 44, "bed_count": 2, "type": "dbedman", "price": 34.0, "whole_room": false, "beds": ["free", "free"]}, {"nr": 45, "bed_count": 2, "type": "dbedwoman", "price": 34.0, "whole_room": false, "beds": ["free", "free"]}, {"nr": 46, "bed_count": 4, "type": "doublecouple", "price": 34.0, "whole_room": true, "beds": ["free", "free", "free", "free"]}, {"nr": 47, "bed_count": 2, "type": "dbedwoman", "price": 34.0, "whole_room": false, "beds": ["free", "free"]}, {"nr": 48, "bed_count": 2, "type": "dbedwoman", "price": 34.0, "whole_room": false, "beds": ["free", "free"]}, {"nr": 49, "bed_count": 2, "type": "dbedwoman", "price": 34.0, "whole_room": false, "beds": ["free", "free"]}, {"nr": 50, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 51, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": false, "beds": ["free", "free", "free"]}, {"nr": 52, "bed_count": 0, "type": "", "price": 0, "whole_room": false, "beds": []}, {"nr": 53, "bed_count": 4, "type": "doublecouple", "price": 34.0, "whole_room": true, "beds": ["Mayra", "Geworg", "block", "block"]}, {"nr": 54, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": false, "beds": ["free", "free", "free"]}, {"nr": 55, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": false, "beds": ["free", "free", "free"]}, {"nr": 56, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["xxxx", "xxxx"]}, {"nr": 57, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["free", "free"]}, {"nr": 58, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": false, "beds": ["free", "free", "free"]}, {"nr": 59, "bed_count": 2, "type": "double", "price": 34.0, "whole_room": true, "beds": ["xxxx", "xxxx"]}, {"nr": 60, "bed_count": 3, "type": "triple", "price": 34.0, "whole_room": false, "beds": ["free", "free", "free"]}, {"nr": 61, "bed_count": 20, "type": "dorm", "price": 18.0, "whole_room": false, "beds": ["10.0", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free", "free"]}];
+const names = [{"name": "Anne-Kathrin ", "room_nr": 13, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Annette Jäger", "room_nr": 4, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Bernd Lautner", "room_nr": 24, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Bernf Lautner", "room_nr": 28, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Birgit Hofer", "room_nr": 12, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Carlo Walther", "room_nr": 21, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Dagmar Lautner", "room_nr": 24, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Dagmar Lautner-Schreiber", "room_nr": 28, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Ehud Levi", "room_nr": 31, "room_type": "Doppelzimmer (Frauen)", "price": 34.0}, {"name": "Elgar Fuchs", "room_nr": 34, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Eva-Maria Rosenthal", "room_nr": 19, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Fariba Sadri", "room_nr": 6, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Geworg", "room_nr": 53, "room_type": "4-Bett (2 Paare)", "price": 34.0}, {"name": "Gregor Davetzhofen", "room_nr": 32, "room_type": "Doppelzimmer (Paar)", "price": 25.0}, {"name": "Heiko Stelzig", "room_nr": 19, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Ines", "room_nr": 17, "room_type": "Orga", "price": 0}, {"name": "Johanna Ruda", "room_nr": 31, "room_type": "Doppelzimmer (Frauen)", "price": 34.0}, {"name": "Julia Peirano", "room_nr": 36, "room_type": "Einzelzimmer", "price": 55.0}, {"name": "Katja Pook", "room_nr": 42, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Klaus-Martin Grewe", "room_nr": 12, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Manfred Jäger", "room_nr": 4, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Maryam Mohraz", "room_nr": 6, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Mayra", "room_nr": 53, "room_type": "4-Bett (2 Paare)", "price": 34.0}, {"name": "Meike Störkel-Albanesi", "room_nr": 23, "room_type": "6-Bett (Frauen)", "price": 25.0}, {"name": "Melinda Mike", "room_nr": 37, "room_type": "Einzelzimmer", "price": 55.0}, {"name": "Miriam Budeck", "room_nr": 21, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Monika Hollauer", "room_nr": 32, "room_type": "Doppelzimmer (Paar)", "price": 25.0}, {"name": "Nicola Müller", "room_nr": 34, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Norbert", "room_nr": 17, "room_type": "Orga", "price": 0}, {"name": "Philipp Neumayer", "room_nr": 38, "room_type": "Einzelzimmer", "price": 55.0}, {"name": "Rainer Gröner", "room_nr": 42, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Regina Corduwitch", "room_nr": 13, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Sebastian Prüfer", "room_nr": 61, "room_type": "Schlafsaal (30 Plätze)", "price": 18.0}, {"name": "Uwe Posselt", "room_nr": 18, "room_type": "Doppelzimmer (Paar)", "price": 34.0}, {"name": "Yvonne Müller", "room_nr": 18, "room_type": "Doppelzimmer (Paar)", "price": 34.0}];
+const bookings = [{"id": 1, "status": "", "paid": false, "paydate": "", "people": ["Heiko Stelzig", "Eva-Maria Rosenthal"], "room": 19, "city": "Nuernberg", "country": "Germany", "email": "gizlets@web.de", "price": 136.0, "wishes": "", "canceled": false}, {"id": 4, "status": "paid", "paid": true, "paydate": "2026-03-06 10:11:00", "people": ["Fariba Sadri", "Maryam Mohraz"], "room": 6, "city": "Heidelberg", "country": "D", "email": "Maryamnyc@yahoo.de", "price": 136.0, "wishes": "Wie beim Klub k besprochen, ich hoffe das ist ok! Ich war unsicher, aber Fariba meinte ich soll es jetzt schon machen…", "canceled": false}, {"id": 5, "status": "paid", "paid": true, "paydate": "2026-03-10 10:19:00", "people": ["Uwe Posselt", "Yvonne Müller"], "room": 18, "city": "Dresden", "country": "Deutschland", "email": "u.posselt@gmx.de", "price": 136.0, "wishes": "", "canceled": false}, {"id": 6, "status": "open", "paid": false, "paydate": "", "people": ["Bernf Lautner", "Dagmar Lautner-Schreiber"], "room": 28, "city": "Dresden", "country": "Deutschland", "email": "info@geistwerk.de", "price": 136.0, "wishes": "", "canceled": false}, {"id": 7, "status": "open", "paid": false, "paydate": "", "people": ["Carlo Walther", "Miriam Budeck"], "room": 21, "city": "Friedberg (Hessen)", "country": "Deutschland", "email": "c_walther@t-online.de", "price": 136.0, "wishes": "", "canceled": false}, {"id": 8, "status": "paid", "paid": true, "paydate": "2026-03-12 10:11:00", "people": ["Meike Störkel-Albanesi"], "room": 23, "city": "Frankfurt ", "country": "Germany", "email": "meistoerkel@web.de", "price": 50.0, "wishes": "", "canceled": false}, {"id": 9, "status": "paid", "paid": true, "paydate": "2026-03-11 15:07:00", "people": ["Rainer Gröner", "Katja Pook"], "room": 42, "city": "Karlsruhe", "country": "Deutschland", "email": "rainer.groener@online.de", "price": 136.0, "wishes": "", "canceled": false}, {"id": 10, "status": "open", "paid": false, "paydate": "", "people": ["Sebastian Prüfer"], "room": 61, "city": "Bad Belzig", "country": "Deutschland", "email": "Sebastian.Pruefer@gmail.com", "price": 36.0, "wishes": "", "canceled": false}, {"id": 11, "status": "open", "paid": false, "paydate": "", "people": ["Elgar Fuchs", "Nicola Müller"], "room": 34, "city": "Neufelden", "country": "Österreich", "email": "elgar.fuchs@web.de", "price": 136.0, "wishes": "", "canceled": false}];
+const typeLabels = {"double": "Doppelzimmer (Paar)", "dbedwoman": "Doppelzimmer (Frauen)", "dbedman": "Doppelzimmer (Männer)", "single": "Einzelzimmer", "triple": "Dreibettzimmer", "sixwoman": "6-Bett (Frauen)", "sixman": "6-Bett (Männer)", "loud": "Doppelzimmer (laut/nah)", "doublecouple": "4-Bett (2 Paare)", "dorm": "Schlafsaal (30 Plätze)", "": "Sonstig"};
+const typeStats = {"double": {"total": 46, "occupied": 28, "free": 8, "blocked": 10}, "dbedwoman": {"total": 12, "occupied": 2, "free": 8, "blocked": 2}, "dbedman": {"total": 6, "occupied": 0, "free": 4, "blocked": 2}, "single": {"total": 8, "occupied": 3, "free": 1, "blocked": 4}, "loud": {"total": 6, "occupied": 0, "free": 6, "blocked": 0}, "sixwoman": {"total": 12, "occupied": 1, "free": 11, "blocked": 0}, "sixman": {"total": 12, "occupied": 0, "free": 12, "blocked": 0}, "triple": {"total": 24, "occupied": 0, "free": 24, "blocked": 0}, "doublecouple": {"total": 8, "occupied": 2, "free": 4, "blocked": 2}, "dorm": {"total": 20, "occupied": 1, "free": 19, "blocked": 0}};
+
+// Navigation
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Type bars
+function renderTypeBars() {
+  const container = document.getElementById('typeBars');
+  let html = '';
+  const order = ['double','loud','single','triple','doublecouple','dbedwoman','dbedman','sixwoman','sixman','dorm'];
+  for (const t of order) {
+    const s = typeStats[t];
+    if (!s) continue;
+    const total = s.total;
+    const label = typeLabels[t] || t;
+    html += `<div class="type-bar-row">
+      <div class="type-bar-label">${label} (${s.occupied}/${total} belegt)</div>
+      <div class="type-bar-track">`;
+    if (s.occupied > 0) html += `<div class="type-bar-segment occ" style="width:${s.occupied/total*100}%">${s.occupied}</div>`;
+    if (s.free > 0) html += `<div class="type-bar-segment free" style="width:${s.free/total*100}%">${s.free}</div>`;
+    if (s.blocked > 0) html += `<div class="type-bar-segment blk" style="width:${s.blocked/total*100}%">${s.blocked}</div>`;
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+// Floor plan
+function renderFloorPlan() {
+  const grid = document.getElementById('floorGrid');
+  let html = '';
+  for (const r of rooms) {
+    if (!r.type && r.bed_count === 0) continue;
+    const beds = r.beds;
+    const allFree = beds.every(b => b === 'free');
+    const allBlocked = beds.every(b => b === 'blocked' || b === 'block');
+    const isNorbert = r.nr === 17;
+    const hasOccupied = beds.some(b => b !== 'free' && b !== 'blocked' && b !== 'block');
+    const hasFree = beds.some(b => b === 'free');
+
+    let cls = 'f-free';
+    if (isNorbert) cls = 'f-norbert';
+    else if (allBlocked) cls = 'f-blocked';
+    else if (hasOccupied && hasFree) cls = 'f-partial';
+    else if (hasOccupied) cls = 'f-occupied';
+
+    const typeShort = {
+      'double':'DZ','dbedwoman':'DZ♀','dbedman':'DZ♂','single':'EZ',
+      'triple':'3er','sixwoman':'6♀','sixman':'6♂','loud':'DZ!',
+      'doublecouple':'4er','dorm':'Saal','':"—"
+    }[r.type] || r.type;
+
+    const names_in = beds.filter(b => b !== 'free' && b !== 'blocked' && b !== 'block').join('<br>');
+    const tooltip_content = names_in ? names_in : (allBlocked ? 'Blockiert' : 'Frei');
+
+    html += `<div class="floor-room ${cls}">
+      <div class="fnr">${r.nr}</div>
+      <div class="ftype">${typeShort}</div>
+      <div class="tooltip">${tooltip_content}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// Room cards
+function renderRooms(filter='') {
+  const grid = document.getElementById('roomGrid');
+  let html = '';
+  for (const r of rooms) {
+    if (!r.type && r.bed_count === 0) continue;
+    const beds = r.beds;
+    const allFree = beds.every(b => b === 'free');
+    const allBlocked = beds.every(b => b === 'blocked' || b === 'block');
+    const hasOccupied = beds.some(b => b !== 'free' && b !== 'blocked' && b !== 'block');
+    const hasFree = beds.some(b => b === 'free');
+
+    // Filter
+    if (filter) {
+      const f = filter.toLowerCase();
+      const match = beds.some(b => b.toLowerCase().includes(f)) ||
+        r.nr.toString().includes(f) ||
+        (typeLabels[r.type]||'').toLowerCase().includes(f) ||
+        r.type.toLowerCase().includes(f);
+      if (!match) continue;
+    }
+
+    let cardClass = 'free';
+    if (allBlocked) cardClass = 'blocked';
+    else if (hasOccupied && hasFree) cardClass = 'partial';
+    else if (hasOccupied) cardClass = 'occupied';
+
+    let bedHtml = '';
+    for (const b of beds) {
+      let bcls = 'free';
+      let label = '— frei —';
+      if (b === 'blocked' || b === 'block') { bcls = 'blocked'; label = 'blockiert'; }
+      else if (b !== 'free') { bcls = 'occupied'; label = b; }
+      // Check if b is a booking reference number
+      if (!isNaN(b) && b !== 'free') {
+        const bid = parseInt(b);
+        const booking = bookings.find(bk => bk.id === bid);
+        if (booking) {
+          label = booking.people.join(', ');
+          bcls = 'occupied';
+        }
+      }
+      bedHtml += `<li class="${bcls}">${label}</li>`;
+    }
+
+    const tl = typeLabels[r.type] || r.type || '—';
+    html += `<div class="room-card ${cardClass}">
+      <div class="room-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="room-nr">${r.nr}</div>
+          <span class="room-type">${tl}</span>
+        </div>
+        <span class="room-price">${r.price}€</span>
+      </div>
+      <ul class="bed-list">${bedHtml}</ul>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+function filterRooms(val) { renderRooms(val); }
+
+// Name table
+function renderNames(filter='') {
+  const tbody = document.querySelector('#nameTable tbody');
+  let html = '';
+  for (const n of names) {
+    if (filter && !n.name.toLowerCase().includes(filter.toLowerCase()) &&
+        !n.room_nr.toString().includes(filter)) continue;
+    html += `<tr>
+      <td style="font-weight:600">${n.name}</td>
+      <td><span class="room-badge">Zi. ${n.room_nr}</span></td>
+      <td style="color:#888">${n.room_type}</td>
+      <td style="color:#f0a500">${n.price > 0 ? n.price+'€' : '—'}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+function filterNames(val) { renderNames(val); }
+
+// Bookings
+function renderBookings() {
+  const tbody = document.getElementById('bookingBody');
+  let html = '';
+  for (const b of bookings) {
+    const statusClass = b.paid ? 'paid' : (b.canceled ? 'canceled' : 'open');
+    const statusText = b.paid ? 'Bezahlt' : (b.canceled ? 'Storniert' : 'Offen');
+    html += `<tr>
+      <td>${b.id}</td>
+      <td style="font-weight:600">${b.people.join('<br>')}</td>
+      <td><span class="room-badge">Zi. ${b.room}</span></td>
+      <td>${b.city}</td>
+      <td><span class="badge ${statusClass}">${statusText}</span></td>
+      <td style="color:#f0a500;font-weight:600">${b.price}€</td>
+      <td style="color:#666;font-size:0.8em">${b.email}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+// Init
+renderTypeBars();
+renderFloorPlan();
+renderRooms();
+renderNames();
+renderBookings();
+</script>
+</body>
+</html>
